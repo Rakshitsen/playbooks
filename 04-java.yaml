@@ -1,0 +1,26 @@
+---
+- name: Install Java and Verify Version
+  hosts: webservers
+  become: yes
+  remote_user: devops
+  tasks:
+    - name: Run apt updates (Debian-based systems)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600  # Cache for 1 hour
+      when: ansible_os_family == "Debian"
+
+    - name: Install Java (OpenJDK 11)
+      apt:
+        name: openjdk-11-jdk
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Capture Java version
+      shell: java -version 2>&1
+      register: jversion
+
+    - name: Print Java version
+      debug:
+        var: jversion.stdout_lines
+

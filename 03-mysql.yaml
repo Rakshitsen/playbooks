@@ -1,0 +1,24 @@
+---
+- name: Install and configure MySQL
+  hosts: webservers
+  become: yes
+  remote_user: devops
+  tasks:
+    - name: Run apt-get update (Debian-based systems)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600  # Cache for 1 hour
+      when: ansible_os_family == "Debian"
+
+    - name: Install MySQL server
+      apt:
+        name: mysql-server
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Start and enable MySQL service
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
+
