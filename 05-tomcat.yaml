@@ -1,0 +1,86 @@
+---
+- name: Installing Tomcat
+  hosts: webservers
+  become: yes
+  remote_user: devops
+  tasks:
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+        update_cache: yes
+
+    - name: Add group tomcat
+      group:
+        name: tomcat
+
+    - name: Add user tomcat
+      user:
+        name: tomcat
+        group: tomcat
+        createhome: no
+
+    - name: Download Tomcat
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.39/bin/apache-tomcat-10.1.39.tar.gz
+        dest: /tmp/apache-tomcat-10.1.39.tar.gz
+
+    - name: Extract Archive
+      unarchive:
+        src: /tmp/apache-tomcat-10.1.39.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Create symlink
+      file:
+        src: /opt/apache-tomcat-10.1.39
+        path: /opt/tomcat
+        state: link
+
+    - name: Change ownership of Tomcat installation
+      file:
+        path: /opt/tomcat
+        owner: tomcat
+        group: tomcat
+        mode: "0755"
+        state: directory
+        recurse: yes
+
+    - name: Create tomcat.service file
+      file:
+        path: /etc/systemd/system/tomcat.service
+        state: touch
+
+    - name: Create Tomcat service
+      blockinfile:
+        path: /etc/systemd/system/tomcat.service
+        block: |
+          [Unit]
+          Description=Tomcat - instance %i
+          After=syslog.target network.target
+
+          [Service]
+          Type=forking
+          User=tomcat
+          Group=tomcat
+          Environment="CATALINA_HOME=/opt/tomcat/"
+          ExecStart=/opt/tomcat/bin/startup.sh
+          ExecStop=/opt/tomcat/bin/shutdown.sh
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable & start Tomcat service
+      systemd:
+        name: tomcat
+        state: started
+        enabled: yes
+
+    - name: Validate Tomcat is running
+      shell: service tomcat status
+      register: tstatus
+
+    - name: Display Tomcat status
+      debug:
+        var: tstatus.stdout_lines
+

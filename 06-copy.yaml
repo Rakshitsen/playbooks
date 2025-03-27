@@ -1,0 +1,12 @@
+---
+- name: Copy file to remote machines
+  hosts: webservers
+  become: yes
+  remote_user: devops
+  tasks: 
+    - name: Copying config file to remote machines
+      copy: 
+        src: /etc/ansible/ansible.cfg
+        dest: /tmp/
+        owner: root
+        group: root
