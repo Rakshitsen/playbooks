@@ -1,0 +1,11 @@
+---
+- name: first playbook
+  hosts: localhost
+  tasks:
+  - name: create a file on remote machine
+    file:
+     path: /tmp/text.txt
+     state: touch
+     owner: devops
+     mode: 0644
+     group: devops
